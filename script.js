@@ -133,211 +133,632 @@ function renderProjects(repos) {
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     fetchRepositories();
+
+    // Initialize tsParticles
+    tsParticles.load("particles-js", {
+        background: {
+            color: { value: "transparent" }
+        },
+        fpsLimit: 60,
+        interactivity: {
+            events: {
+                onClick: { enable: true, mode: "push" },
+                onHover: { enable: true, mode: "repulse" },
+                resize: true
+            },
+            modes: {
+                push: { quantity: 4 },
+                repulse: { distance: 100, duration: 0.4 }
+            }
+        },
+        particles: {
+            color: { value: "#58a6ff" },
+            links: {
+                color: "#58a6ff",
+                distance: 150,
+                enable: true,
+                opacity: 0.3,
+                width: 1
+            },
+            collisions: { enable: true },
+            move: {
+                direction: "none",
+                enable: true,
+                outMode: "bounce",
+                random: false,
+                speed: 1,
+                straight: false
+            },
+            number: {
+                density: { enable: true, value_area: 800 },
+                value: 80
+            },
+            opacity: { value: 0.5 },
+            shape: { type: "circle" },
+            size: { random: true, value: 3 }
+        },
+        detectRetina: true
+    });
 });
 
-// --- Snake Game Logic ---
-const canvas = document.getElementById('game-canvas');
-const ctx = canvas.getContext('2d');
-const scoreElement = document.getElementById('score');
-const highScoreElement = document.getElementById('high-score');
-const overlay = document.getElementById('game-overlay');
-const messageElement = document.getElementById('game-message');
+let activeGame = 'snake';
 
-const gridSize = 20;
-const tileCount = canvas.width / gridSize;
-let snake = [];
-let food = {};
-let dx = 0;
-let dy = 0;
-let score = 0;
-let highScore = localStorage.getItem('anarchySnakeHighScore') || 0;
-let gameLoop;
-let isPlaying = false;
-let isGameOver = false;
+document.getElementById('gameTabs').addEventListener('shown.bs.tab', function (event) {
+    if (event.target.id === 'snake-tab') {
+        activeGame = 'snake';
+    } else if (event.target.id === 'tetris-tab') {
+        activeGame = 'tetris';
+    }
+});
 
-highScoreElement.textContent = `High Score: ${highScore}`;
+// --- Snake Game Logic Refactored ---
+class SnakeGame {
+    constructor() {
+        this.canvas = document.getElementById('game-canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.scoreElement = document.getElementById('snake-score');
+        this.highScoreElement = document.getElementById('snake-high-score');
+        this.overlay = document.getElementById('snake-game-overlay');
+        this.messageElement = document.getElementById('snake-game-message');
 
-function resetGame() {
-    snake = [
-        { x: Math.floor(tileCount / 2), y: Math.floor(tileCount / 2) }
-    ];
-    dx = 0;
-    dy = 0;
-    score = 0;
-    scoreElement.textContent = `Score: ${score}`;
-    placeFood();
-    isGameOver = false;
-}
+        this.gridSize = 20;
+        this.tileCount = this.canvas.width / this.gridSize;
+        this.snake = [];
+        this.food = {};
+        this.dx = 0;
+        this.dy = 0;
+        this.score = 0;
+        this.highScore = localStorage.getItem('anarchySnakeHighScore') || 0;
+        this.gameLoop = null;
+        this.isPlaying = false;
+        this.isGameOver = false;
 
-function placeFood() {
-    food = {
-        x: Math.floor(Math.random() * tileCount),
-        y: Math.floor(Math.random() * tileCount)
-    };
-    // Ensure food doesn't spawn on snake
-    for (let segment of snake) {
-        if (segment.x === food.x && segment.y === food.y) {
-            placeFood();
-            break;
+        this.highScoreElement.textContent = `High Score: ${this.highScore}`;
+
+        this.overlay.addEventListener('click', () => this.startGame());
+
+        this.resetGame();
+        this.drawGame();
+    }
+
+    resetGame() {
+        this.snake = [
+            { x: Math.floor(this.tileCount / 2), y: Math.floor(this.tileCount / 2) }
+        ];
+        this.dx = 0;
+        this.dy = 0;
+        this.score = 0;
+        this.scoreElement.textContent = `Score: ${this.score}`;
+        this.placeFood();
+        this.isGameOver = false;
+    }
+
+    placeFood() {
+        this.food = {
+            x: Math.floor(Math.random() * this.tileCount),
+            y: Math.floor(Math.random() * this.tileCount)
+        };
+        for (let segment of this.snake) {
+            if (segment.x === this.food.x && segment.y === this.food.y) {
+                this.placeFood();
+                break;
+            }
         }
     }
-}
 
-function updateGame() {
-    // Move snake
-    const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+    updateGame() {
+        const head = { x: this.snake[0].x + this.dx, y: this.snake[0].y + this.dy };
 
-    // Check game over
-    if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount || checkCollision(head)) {
-        gameOver();
-        return;
-    }
-
-    snake.unshift(head);
-
-    // Check food collision
-    if (head.x === food.x && head.y === food.y) {
-        score += 10;
-        scoreElement.textContent = `Score: ${score}`;
-        if (score > highScore) {
-            highScore = score;
-            highScoreElement.textContent = `High Score: ${highScore}`;
-            localStorage.setItem('anarchySnakeHighScore', highScore);
+        if (head.x < 0 || head.x >= this.tileCount || head.y < 0 || head.y >= this.tileCount || this.checkCollision(head)) {
+            this.gameOver();
+            return;
         }
-        placeFood();
-    } else {
-        snake.pop();
-    }
 
-    drawGame();
-}
+        this.snake.unshift(head);
 
-function checkCollision(head) {
-    // Start from 1 so head doesn't collide with itself initially
-    for (let i = 1; i < snake.length; i++) {
-        if (head.x === snake[i].x && head.y === snake[i].y) {
-            return true;
-        }
-    }
-    return false;
-}
-
-function drawGame() {
-    // Clear canvas
-    ctx.fillStyle = '#111';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Draw grid (optional, for "wasteland" feel)
-    ctx.strokeStyle = '#222';
-    for (let i = 0; i < tileCount; i++) {
-        ctx.beginPath();
-        ctx.moveTo(i * gridSize, 0);
-        ctx.lineTo(i * gridSize, canvas.height);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(0, i * gridSize);
-        ctx.lineTo(canvas.width, i * gridSize);
-        ctx.stroke();
-    }
-
-    // Draw food (Golden Apple vibe)
-    ctx.fillStyle = '#FFD700'; 
-    ctx.beginPath();
-    ctx.arc(food.x * gridSize + gridSize/2, food.y * gridSize + gridSize/2, gridSize/2 - 2, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Draw snake
-    snake.forEach((segment, index) => {
-        // Head is a different color
-        if (index === 0) {
-            ctx.fillStyle = '#39d353'; // Neon green head
+        if (head.x === this.food.x && head.y === this.food.y) {
+            this.score += 10;
+            this.scoreElement.textContent = `Score: ${this.score}`;
+            if (this.score > this.highScore) {
+                this.highScore = this.score;
+                this.highScoreElement.textContent = `High Score: ${this.highScore}`;
+                localStorage.setItem('anarchySnakeHighScore', this.highScore);
+            }
+            this.placeFood();
         } else {
-            // Body fades slightly
-            const alpha = Math.max(0.3, 1 - (index / snake.length));
-            ctx.fillStyle = `rgba(57, 211, 83, ${alpha})`;
+            this.snake.pop();
         }
-        
-        ctx.fillRect(segment.x * gridSize + 1, segment.y * gridSize + 1, gridSize - 2, gridSize - 2);
-    });
-}
 
-function startGame() {
-    if (isPlaying) return;
-    
-    if (isGameOver) {
-        resetGame();
-    } else if (snake.length === 0) {
-        resetGame();
+        this.drawGame();
     }
-    
-    isPlaying = true;
-    overlay.classList.add('hidden');
-    
-    // Initial movement so snake starts going immediately if pressing a direction, or defaults to right
-    if(dx === 0 && dy === 0) dx = 1; 
 
-    gameLoop = setInterval(updateGame, 100); // Speed
+    checkCollision(head) {
+        for (let i = 1; i < this.snake.length; i++) {
+            if (head.x === this.snake[i].x && head.y === this.snake[i].y) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    drawRoundedRect(x, y, width, height, radius) {
+        this.ctx.beginPath();
+        this.ctx.moveTo(x + radius, y);
+        this.ctx.lineTo(x + width - radius, y);
+        this.ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+        this.ctx.lineTo(x + width, y + height - radius);
+        this.ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        this.ctx.lineTo(x + radius, y + height);
+        this.ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+        this.ctx.lineTo(x, y + radius);
+        this.ctx.quadraticCurveTo(x, y, x + radius, y);
+        this.ctx.closePath();
+        this.ctx.fill();
+    }
+
+    drawGame() {
+        this.ctx.fillStyle = '#111';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        this.ctx.strokeStyle = '#222';
+        for (let i = 0; i < this.tileCount; i++) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(i * this.gridSize, 0);
+            this.ctx.lineTo(i * this.gridSize, this.canvas.height);
+            this.ctx.stroke();
+            this.ctx.beginPath();
+            this.ctx.moveTo(0, i * this.gridSize);
+            this.ctx.lineTo(this.canvas.width, i * this.gridSize);
+            this.ctx.stroke();
+        }
+
+        // Draw food with a glowing effect
+        this.ctx.shadowBlur = 10;
+        this.ctx.shadowColor = '#FFD700';
+        this.ctx.fillStyle = '#FFD700';
+        this.ctx.beginPath();
+        this.ctx.arc(this.food.x * this.gridSize + this.gridSize/2, this.food.y * this.gridSize + this.gridSize/2, this.gridSize/2 - 2, 0, Math.PI * 2);
+        this.ctx.fill();
+        this.ctx.shadowBlur = 0; // Reset shadow
+
+        // Draw snake
+        this.snake.forEach((segment, index) => {
+            if (index === 0) {
+                this.ctx.fillStyle = '#39d353';
+            } else {
+                const alpha = Math.max(0.3, 1 - (index / this.snake.length));
+                this.ctx.fillStyle = `rgba(57, 211, 83, ${alpha})`;
+            }
+
+            // Draw rounded segments
+            this.drawRoundedRect(segment.x * this.gridSize + 1, segment.y * this.gridSize + 1, this.gridSize - 2, this.gridSize - 2, 4);
+
+            // Draw eyes on the head
+            if (index === 0) {
+                this.ctx.fillStyle = '#000';
+                let eyeOffsetX = 5;
+                let eyeOffsetY = 5;
+                let eyeSize = 3;
+
+                // Adjust eyes based on direction
+                if (this.dx === 1) { // Right
+                    this.ctx.fillRect(segment.x * this.gridSize + this.gridSize - eyeOffsetX - eyeSize, segment.y * this.gridSize + eyeOffsetY, eyeSize, eyeSize);
+                    this.ctx.fillRect(segment.x * this.gridSize + this.gridSize - eyeOffsetX - eyeSize, segment.y * this.gridSize + this.gridSize - eyeOffsetY - eyeSize, eyeSize, eyeSize);
+                } else if (this.dx === -1) { // Left
+                    this.ctx.fillRect(segment.x * this.gridSize + eyeOffsetX, segment.y * this.gridSize + eyeOffsetY, eyeSize, eyeSize);
+                    this.ctx.fillRect(segment.x * this.gridSize + eyeOffsetX, segment.y * this.gridSize + this.gridSize - eyeOffsetY - eyeSize, eyeSize, eyeSize);
+                } else if (this.dy === 1) { // Down
+                    this.ctx.fillRect(segment.x * this.gridSize + eyeOffsetY, segment.y * this.gridSize + this.gridSize - eyeOffsetX - eyeSize, eyeSize, eyeSize);
+                    this.ctx.fillRect(segment.x * this.gridSize + this.gridSize - eyeOffsetY - eyeSize, segment.y * this.gridSize + this.gridSize - eyeOffsetX - eyeSize, eyeSize, eyeSize);
+                } else { // Up or stopped
+                    this.ctx.fillRect(segment.x * this.gridSize + eyeOffsetY, segment.y * this.gridSize + eyeOffsetX, eyeSize, eyeSize);
+                    this.ctx.fillRect(segment.x * this.gridSize + this.gridSize - eyeOffsetY - eyeSize, segment.y * this.gridSize + eyeOffsetX, eyeSize, eyeSize);
+                }
+            }
+        });
+    }
+
+    startGame() {
+        if (this.isPlaying) return;
+
+        if (this.isGameOver) {
+            this.resetGame();
+        } else if (this.snake.length === 0) {
+            this.resetGame();
+        }
+
+        this.isPlaying = true;
+        this.overlay.classList.add('hidden');
+
+        if(this.dx === 0 && this.dy === 0) this.dx = 1;
+
+        this.gameLoop = setInterval(() => this.updateGame(), 100);
+    }
+
+    gameOver() {
+        this.isPlaying = false;
+        this.isGameOver = true;
+        clearInterval(this.gameLoop);
+        this.messageElement.textContent = 'Game Over. Space to Restart';
+        this.overlay.classList.remove('hidden');
+        this.drawGame();
+
+        this.ctx.fillStyle = 'rgba(255, 0, 0, 0.2)';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+
+    handleInput(e) {
+        if (e.code === 'Space') {
+            this.startGame();
+            return;
+        }
+
+        if (!this.isPlaying) return;
+
+        switch (e.key) {
+            case 'ArrowUp':
+            case 'w':
+                if (this.dy !== 1) { this.dx = 0; this.dy = -1; }
+                break;
+            case 'ArrowDown':
+            case 's':
+                if (this.dy !== -1) { this.dx = 0; this.dy = 1; }
+                break;
+            case 'ArrowLeft':
+            case 'a':
+                if (this.dx !== 1) { this.dx = -1; this.dy = 0; }
+                break;
+            case 'ArrowRight':
+            case 'd':
+                if (this.dx !== -1) { this.dx = 1; this.dy = 0; }
+                break;
+        }
+    }
 }
 
-function gameOver() {
-    isPlaying = false;
-    isGameOver = true;
-    clearInterval(gameLoop);
-    messageElement.textContent = 'Game Over. Space to Restart';
-    overlay.classList.remove('hidden');
-    drawGame(); // Ensure last frame is drawn
-    
-    // Draw red overlay
-    ctx.fillStyle = 'rgba(255, 0, 0, 0.2)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+const snakeGame = new SnakeGame();
+
+// --- Tetris Game Logic ---
+class TetrisGame {
+    constructor() {
+        this.canvas = document.getElementById('tetris-canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.scoreElement = document.getElementById('tetris-score');
+        this.linesElement = document.getElementById('tetris-lines');
+        this.overlay = document.getElementById('tetris-game-overlay');
+        this.messageElement = document.getElementById('tetris-game-message');
+
+        this.gridSize = 30;
+        this.cols = this.canvas.width / this.gridSize; // 10
+        this.rows = this.canvas.height / this.gridSize; // 20
+
+        this.colors = [
+            null,
+            '#00FFFF', // I
+            '#0000FF', // J
+            '#FFA500', // L
+            '#FFFF00', // O
+            '#00FF00', // S
+            '#800080', // T
+            '#FF0000'  // Z
+        ];
+
+        this.pieces = [
+            [], // 0
+            [[0,0,0,0], [1,1,1,1], [0,0,0,0], [0,0,0,0]], // I
+            [[2,0,0], [2,2,2], [0,0,0]], // J
+            [[0,0,3], [3,3,3], [0,0,0]], // L
+            [[4,4], [4,4]], // O
+            [[0,5,5], [5,5,0], [0,0,0]], // S
+            [[0,6,0], [6,6,6], [0,0,0]], // T
+            [[7,7,0], [0,7,7], [0,0,0]]  // Z
+        ];
+
+        this.board = [];
+        this.piece = null;
+        this.pos = { x: 0, y: 0 };
+
+        this.score = 0;
+        this.lines = 0;
+
+        this.dropCounter = 0;
+        this.dropInterval = 1000;
+        this.lastTime = 0;
+
+        this.animationId = null;
+        this.isPlaying = false;
+        this.isGameOver = false;
+
+        this.overlay.addEventListener('click', () => this.startGame());
+
+        this.resetGame();
+        this.drawGame();
+    }
+
+    createMatrix(w, h) {
+        const matrix = [];
+        while (h--) {
+            matrix.push(new Array(w).fill(0));
+        }
+        return matrix;
+    }
+
+    resetGame() {
+        this.board = this.createMatrix(this.cols, this.rows);
+        this.score = 0;
+        this.lines = 0;
+        this.dropInterval = 1000;
+        this.updateScore();
+        this.spawnPiece();
+        this.isGameOver = false;
+    }
+
+    spawnPiece() {
+        const typeId = Math.floor(Math.random() * 7) + 1;
+        this.piece = this.pieces[typeId];
+        this.pos.y = 0;
+        this.pos.x = Math.floor(this.cols / 2) - Math.floor(this.piece[0].length / 2);
+
+        if (this.collide()) {
+            this.gameOver();
+        }
+    }
+
+    collide() {
+        const [m, o] = [this.piece, this.pos];
+        for (let y = 0; y < m.length; ++y) {
+            for (let x = 0; x < m[y].length; ++x) {
+                if (m[y][x] !== 0 &&
+                   (this.board[y + o.y] && this.board[y + o.y][x + o.x]) !== 0) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    merge() {
+        this.piece.forEach((row, y) => {
+            row.forEach((value, x) => {
+                if (value !== 0) {
+                    this.board[y + this.pos.y][x + this.pos.x] = value;
+                }
+            });
+        });
+    }
+
+    rotate(matrix, dir) {
+        for (let y = 0; y < matrix.length; ++y) {
+            for (let x = 0; x < y; ++x) {
+                [
+                    matrix[x][y],
+                    matrix[y][x],
+                ] = [
+                    matrix[y][x],
+                    matrix[x][y],
+                ];
+            }
+        }
+        if (dir > 0) {
+            matrix.forEach(row => row.reverse());
+        } else {
+            matrix.reverse();
+        }
+    }
+
+    playerRotate(dir) {
+        const pos = this.pos.x;
+        let offset = 1;
+        this.rotate(this.piece, dir);
+        while (this.collide()) {
+            this.pos.x += offset;
+            offset = -(offset + (offset > 0 ? 1 : -1));
+            if (offset > this.piece[0].length) {
+                this.rotate(this.piece, -dir);
+                this.pos.x = pos;
+                return;
+            }
+        }
+    }
+
+    playerDrop() {
+        this.pos.y++;
+        if (this.collide()) {
+            this.pos.y--;
+            this.merge();
+            this.spawnPiece();
+            this.clearLines();
+        }
+        this.dropCounter = 0;
+    }
+
+    playerMove(dir) {
+        this.pos.x += dir;
+        if (this.collide()) {
+            this.pos.x -= dir;
+        }
+    }
+
+    clearLines() {
+        let rowCount = 1;
+        outer: for (let y = this.board.length - 1; y >= 0; --y) {
+            for (let x = 0; x < this.board[y].length; ++x) {
+                if (this.board[y][x] === 0) {
+                    continue outer;
+                }
+            }
+            const row = this.board.splice(y, 1)[0].fill(0);
+            this.board.unshift(row);
+            ++y;
+            this.score += rowCount * 100;
+            this.lines++;
+            rowCount *= 2;
+
+            // Speed up
+            if (this.lines % 5 === 0 && this.dropInterval > 100) {
+                this.dropInterval -= 100;
+            }
+        }
+        this.updateScore();
+    }
+
+    updateScore() {
+        this.scoreElement.textContent = `Score: ${this.score}`;
+        this.linesElement.textContent = `Lines: ${this.lines}`;
+    }
+
+    drawMatrix(matrix, offset) {
+        matrix.forEach((row, y) => {
+            row.forEach((value, x) => {
+                if (value !== 0) {
+                    this.ctx.fillStyle = this.colors[value];
+                    this.ctx.fillRect((x + offset.x) * this.gridSize, (y + offset.y) * this.gridSize, this.gridSize - 1, this.gridSize - 1);
+
+                    // Add some shine
+                    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                    this.ctx.fillRect((x + offset.x) * this.gridSize, (y + offset.y) * this.gridSize, this.gridSize - 1, 4);
+                    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                    this.ctx.fillRect((x + offset.x) * this.gridSize + this.gridSize - 5, (y + offset.y) * this.gridSize, 4, this.gridSize - 1);
+                }
+            });
+        });
+    }
+
+    drawGhost() {
+        const tempPos = { x: this.pos.x, y: this.pos.y };
+        while (!this.collide()) {
+            this.pos.y++;
+        }
+        this.pos.y--;
+
+        this.ctx.globalAlpha = 0.2;
+        this.drawMatrix(this.piece, this.pos);
+        this.ctx.globalAlpha = 1.0;
+
+        this.pos.y = tempPos.y; // Restore position
+    }
+
+    drawGame() {
+        this.ctx.fillStyle = '#111';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        this.ctx.strokeStyle = '#222';
+        for (let i = 0; i <= this.cols; i++) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(i * this.gridSize, 0);
+            this.ctx.lineTo(i * this.gridSize, this.canvas.height);
+            this.ctx.stroke();
+        }
+        for (let i = 0; i <= this.rows; i++) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(0, i * this.gridSize);
+            this.ctx.lineTo(this.canvas.width, i * this.gridSize);
+            this.ctx.stroke();
+        }
+
+        this.drawMatrix(this.board, { x: 0, y: 0 });
+
+        if (this.piece) {
+            this.drawGhost();
+            this.drawMatrix(this.piece, this.pos);
+        }
+    }
+
+    update(time = 0) {
+        if (!this.isPlaying) return;
+
+        const deltaTime = time - this.lastTime;
+        this.lastTime = time;
+        this.dropCounter += deltaTime;
+
+        if (this.dropCounter > this.dropInterval) {
+            this.playerDrop();
+        }
+
+        this.drawGame();
+        this.animationId = requestAnimationFrame(this.update.bind(this));
+    }
+
+    startGame() {
+        if (this.isPlaying) return;
+
+        if (this.isGameOver) {
+            this.resetGame();
+        }
+
+        this.isPlaying = true;
+        this.overlay.classList.add('hidden');
+        this.lastTime = performance.now();
+        this.update();
+    }
+
+    gameOver() {
+        this.isPlaying = false;
+        this.isGameOver = true;
+        cancelAnimationFrame(this.animationId);
+        this.messageElement.textContent = 'Game Over. Space to Restart';
+        this.overlay.classList.remove('hidden');
+        this.drawGame();
+
+        this.ctx.fillStyle = 'rgba(255, 0, 0, 0.2)';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+
+    handleInput(e) {
+        if (e.code === 'Space') {
+            if(!this.isPlaying) {
+                this.startGame();
+            } else {
+                // Hard drop
+                while (!this.collide()) {
+                    this.pos.y++;
+                }
+                this.pos.y--;
+                this.merge();
+                this.spawnPiece();
+                this.clearLines();
+                this.dropCounter = 0;
+            }
+            return;
+        }
+
+        if (!this.isPlaying) return;
+
+        switch (e.key) {
+            case 'ArrowLeft':
+            case 'a':
+                this.playerMove(-1);
+                break;
+            case 'ArrowRight':
+            case 'd':
+                this.playerMove(1);
+                break;
+            case 'ArrowDown':
+            case 's':
+                this.playerDrop();
+                break;
+            case 'ArrowUp':
+            case 'w':
+                this.playerRotate(1);
+                break;
+        }
+    }
 }
 
-// Input handling
+const tetrisGame = new TetrisGame();
+
+// --- Global Input Handler ---
 window.addEventListener('keydown', e => {
-    // Prevent default scrolling for arrow keys and space when game is in view
-    const rect = canvas.getBoundingClientRect();
-    const inView = (
-        rect.top >= 0 &&
-        rect.left >= 0 &&
-        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-        rect.right <= (window.innerWidth || document.documentElement.clientWidth)
-    );
+    const isGameView = true; // In a full app, check if canvas is in view
 
-    if (inView && [32, 37, 38, 39, 40].includes(e.keyCode)) {
+    if (isGameView && ['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
         e.preventDefault();
     }
 
-    if (e.code === 'Space') {
-        startGame();
-        return;
-    }
-
-    if (!isPlaying) return;
-
-    switch (e.key) {
-        case 'ArrowUp':
-        case 'w':
-            if (dy !== 1) { dx = 0; dy = -1; }
-            break;
-        case 'ArrowDown':
-        case 's':
-            if (dy !== -1) { dx = 0; dy = 1; }
-            break;
-        case 'ArrowLeft':
-        case 'a':
-            if (dx !== 1) { dx = -1; dy = 0; }
-            break;
-        case 'ArrowRight':
-        case 'd':
-            if (dx !== -1) { dx = 1; dy = 0; }
-            break;
+    if (activeGame === 'snake') {
+        snakeGame.handleInput(e);
+    } else if (activeGame === 'tetris') {
+        tetrisGame.handleInput(e);
     }
 });
-
-// Click overlay to start
-overlay.addEventListener('click', startGame);
-
-// Initial draw
-resetGame();
-drawGame();
 

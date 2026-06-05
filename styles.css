@@ -500,20 +500,45 @@ footer {
     margin-bottom: 2rem;
 }
 
+.nav-tabs {
+    border-bottom: none;
+}
+
+.nav-tabs .nav-link {
+    background-color: transparent;
+    color: var(--text-secondary);
+    border: none;
+    border-bottom: 3px solid transparent;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+}
+
+.nav-tabs .nav-link:hover {
+    color: var(--text-primary);
+    border-color: transparent;
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--neon-green);
+    background-color: transparent;
+    border: none;
+    border-bottom: 3px solid var(--neon-green);
+}
+
 .game-container {
     background-color: #000;
-    border: 2px solid var(--border-color);
-    border-radius: 8px;
+    border: 2px solid var(--neon-green);
+    border-radius: 12px;
     padding: 1rem;
     position: relative;
     display: inline-block;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 15px var(--neon-glow);
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .game-container:hover {
-    border-color: var(--neon-green);
-    box-shadow: 0 0 30px rgba(57, 211, 83, 0.2);
+    box-shadow: 0 0 30px var(--neon-glow);
 }
 
 .game-header {
