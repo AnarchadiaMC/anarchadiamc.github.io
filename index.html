@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AnarchadiaMC | Developer & Server Admin</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+    <header class="hero">
+        <div class="hero-particles" id="particles-js"></div>
+        <div class="hero-content">
+            <h1>Hi, I'm <span class="highlight">ZimZym</span></h1>
+            <p class="subtitle">aka AnarchadiaMC</p>
+            <p class="sub-subtitle">Developer, Creator, and Administrator of</p>
+            <a href="https://anarchadia.org" class="server-link" target="_blank" rel="noopener noreferrer">
+                <div class="glitch" data-text="Anarchadia.org">Anarchadia.org</div>
+            </a>
+            <div class="server-features">
+                <span class="feature-tag">5+ Years Uninterrupted</span>
+                <span class="feature-tag">Java & Bedrock</span>
+                <span class="feature-tag">No Whitelist</span>
+                <span class="feature-tag">Minimal Anti-cheat</span>
+            </div>
+            <p class="server-desc">Where chaos meets creativity. Experience true freedom.</p>
+        </div>
+        <a href="#projects" class="scroll-down">
+            <i class="fa-solid fa-chevron-down"></i>
+        </a>
+    </header>
+
+    <main>
+        <section id="projects" class="projects-section">
+            <h2>Featured Projects</h2>
+            <div id="projects-container" class="projects-grid">
+                <div class="loading-state">
+                    <i class="fa-solid fa-circle-notch fa-spin"></i> Loading projects from GitHub...
+                </div>
+            </div>
+        </section>
+
+        <section id="minigame" class="minigame-section">
+            <h2>Anarchy Snake</h2>
+            <p class="minigame-desc">Survive the wasteland. Use arrow keys to play.</p>
+            <div class="game-container">
+                <div class="game-header">
+                    <span id="score">Score: 0</span>
+                    <span id="high-score">High Score: 0</span>
+                </div>
+                <canvas id="game-canvas" width="400" height="400"></canvas>
+                <div id="game-overlay" class="game-overlay">
+                    <h3 id="game-message">Press Space to Start</h3>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2023 AnarchadiaMC. All rights reserved.</p>
+        <div class="social-links">
+            <a href="https://github.com/AnarchadiaMC" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-github"></i></a>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
