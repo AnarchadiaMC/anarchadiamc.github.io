@@ -73,14 +73,29 @@
                 </div>
 
                 <div class="tab-pane fade" id="tetris-pane" role="tabpanel" aria-labelledby="tetris-tab" tabindex="0">
-                    <div class="game-container">
-                        <div class="game-header">
-                            <span id="tetris-score">Score: 0</span>
-                            <span id="tetris-lines">Lines: 0</span>
+                    <div class="game-container tetris-layout">
+                        <div class="tetris-side-panel left-panel">
+                            <div class="panel-box">
+                                <h4>Hold</h4>
+                                <canvas id="hold-canvas" width="120" height="120"></canvas>
+                            </div>
+                            <div class="panel-box stats-box">
+                                <span id="tetris-score">Score: 0</span>
+                                <span id="tetris-lines">Lines: 0</span>
+                                <span id="tetris-level">Level: 1</span>
+                            </div>
                         </div>
-                        <canvas id="tetris-canvas" width="300" height="600"></canvas>
-                        <div id="tetris-game-overlay" class="game-overlay">
-                            <h3 id="tetris-game-message">Press Space to Start</h3>
+                        <div class="tetris-main-panel">
+                            <canvas id="tetris-canvas" width="300" height="600"></canvas>
+                            <div id="tetris-game-overlay" class="game-overlay">
+                                <h3 id="tetris-game-message">Press Space to Start</h3>
+                            </div>
+                        </div>
+                        <div class="tetris-side-panel right-panel">
+                            <div class="panel-box">
+                                <h4>Next</h4>
+                                <canvas id="next-canvas" width="120" height="120"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
