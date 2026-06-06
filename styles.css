@@ -557,9 +557,63 @@ footer {
     display: block;
 }
 
+.tetris-layout {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.tetris-main-panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.tetris-side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    min-width: 140px;
+}
+
+.panel-box {
+    background-color: #111;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 0.8rem;
+    text-align: center;
+}
+
+.panel-box h4 {
+    color: var(--neon-green);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.panel-box canvas {
+    background-color: transparent;
+    display: block;
+    margin: 0 auto;
+}
+
+.stats-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-primary);
+    text-align: left;
+}
+
+.stats-box span {
+    font-size: 0.95rem;
+}
+
 .game-overlay {
     position: absolute;
-    top: 50px; /* Account for header */
+    top: 0;
     left: 1rem;
     right: 1rem;
     bottom: 1rem;
